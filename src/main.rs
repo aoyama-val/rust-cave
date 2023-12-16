@@ -1,7 +1,7 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
+use sdl2::rect::{Point, Rect};
 use sdl2::render::{BlendMode, Canvas};
 use sdl2::video::Window;
 use std::time::Duration;
@@ -42,11 +42,7 @@ pub fn main() -> Result<(), String> {
                     ..
                 } => {
                     command = match code {
-                        Keycode::Left => "left",
-                        Keycode::Right => "right",
-                        Keycode::Down => "down",
-                        Keycode::Z => "rotate_left",
-                        Keycode::X => "rotate_right",
+                        Keycode::Up => "up",
                         _ => "",
                     };
                 }
@@ -65,8 +61,24 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
-    // render piles
-    canvas.set_draw_color(Color::RGB(128, 128, 128));
+    canvas.set_draw_color(Color::RGB(255, 0, 0));
+
+    for i in 0..SCREEN_WIDTH {
+        let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
+        canvas.draw_point(Point::new(i as i32, game.ys[x as usize] as i32))?;
+    }
+
+    canvas.set_draw_color(Color::RGB(0, 0, 255));
+    canvas.fill_rect(Rect::new(game.player.x, game.player.y, 4, 4))?;
+    for i in 0..(game.player.old_ys.len()) {
+        canvas.set_draw_color(Color::RGBA(0, 0, 255, (255 - 40 * (i + 1)) as u8));
+        canvas.fill_rect(Rect::new(
+            game.player.x - 4 * (i + 1) as i32,
+            game.player.old_ys[i],
+            4,
+            4,
+        ))?;
+    }
 
     if game.is_over {
         canvas.set_draw_color(Color::RGBA(0, 0, 0, 128));
