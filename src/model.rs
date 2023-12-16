@@ -1,8 +1,9 @@
 use rand::prelude::*;
 use std::time;
 
+use crate::SCREEN_HEIGHT;
+
 const SCREEN_WIDTH: usize = 640;
-const SCREEN_HEIGHT: usize = 420;
 
 pub struct Player {
     pub x: i32,
@@ -15,7 +16,7 @@ impl Player {
     pub fn new() -> Self {
         let player = Player {
             x: 20,
-            y: 390,
+            y: 200,
             velocity: 0.0,
             old_ys: [20; 4],
         };
@@ -23,11 +24,11 @@ impl Player {
     }
 
     pub fn up(&mut self) {
-        self.velocity -= 3.0;
+        self.velocity -= 6.0;
     }
 
     pub fn apply_gravity(&mut self) {
-        self.velocity += 0.2;
+        self.velocity += 0.3;
     }
 
     pub fn do_move(&mut self) {
@@ -106,9 +107,12 @@ impl Game {
         self.player.apply_gravity();
         self.player.do_move();
 
-        if self.frame % 1 == 0 {
-            self.scroll += 1;
+        let x = (self.scroll + self.player.x as i32) % SCREEN_WIDTH as i32;
+        if self.player.y <= self.ys[x as usize] || self.player.y >= SCREEN_HEIGHT as i32 {
+            self.is_over = true;
         }
+
+        self.scroll += 3;
         self.frame += 1;
     }
 }
