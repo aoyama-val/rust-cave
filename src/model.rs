@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use std::{ops::Range, time};
+use std::time;
 
 pub const SCREEN_WIDTH: usize = 640;
 pub const SCREEN_HEIGHT: usize = 420;
@@ -115,6 +115,7 @@ impl Game {
         self.get_ceiling(x) + SPACE_HEIGHT
     }
 
+    // arc[index - 1]と接続するようにarc[index]を作成する
     pub fn create_arc(&mut self, index: usize) {
         let prev_index = if index == 0 { ARC_COUNT - 1 } else { index - 1 };
         let prev_arc = self.arcs[prev_index];
@@ -127,10 +128,10 @@ impl Game {
             let t = (i as f32) / (ARC_WIDTH as f32);
             arc.ys[i] = hermite(arc.p0, arc.p1, arc.v0, arc.v1, t);
         }
-        println!(
-            "Created: index = {}, p0 = {}, prev.p1 = {}, p1 = {}",
-            index, self.arcs[index].p0, prev_arc.p1, self.arcs[index].p1
-        );
+        // println!(
+        //     "Created: index = {}, p0 = {}, prev.p1 = {}, p1 = {}",
+        //     index, self.arcs[index].p0, prev_arc.p1, self.arcs[index].p1
+        // );
     }
 
     pub fn update(&mut self, command: Command) {
