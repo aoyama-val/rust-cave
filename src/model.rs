@@ -121,13 +121,7 @@ impl Game {
         let arc = &mut self.arcs[index];
         arc.p0 = prev_arc.p1;
         arc.v0 = prev_arc.v1;
-        arc.p1 = arc.p0 + self.rng.gen_range(-40..40) as f32;
-        if arc.p1 < 0.0 {
-            arc.p1 = 0.0;
-        }
-        if arc.p1 > 300.0 {
-            arc.p1 = 300.0;
-        }
+        arc.p1 = clamp(0.0, arc.p0 + self.rng.gen_range(-40..40) as f32, 300.0);
         arc.v1 = self.rng.gen();
         for i in 0..arc.ys.len() {
             let t = (i as f32) / (ARC_WIDTH as f32);
@@ -168,6 +162,16 @@ impl Game {
 
         self.frame += 1;
     }
+}
+
+fn clamp<T: PartialOrd>(min: T, value: T, max: T) -> T {
+    if value < min {
+        return min;
+    }
+    if value > max {
+        return max;
+    }
+    value
 }
 
 // エルミート補間（p0, p1をそれぞれ傾きv0, v1で通る3次曲線で補間）
