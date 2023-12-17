@@ -4,8 +4,8 @@ use std::{ops::Range, time};
 pub const SCREEN_WIDTH: usize = 640;
 pub const SCREEN_HEIGHT: usize = 420;
 pub const ARC_WIDTH: usize = 20; // 1個の3次曲線の幅
-pub const BUFFER_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH * 2; // スクロールさせるため、画面幅＋2個分の空間を用意しておく
-pub const ARC_COUNT: usize = BUFFER_WIDTH / ARC_WIDTH;
+pub const WORLD_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH * 2; // 世界の広さ。画面幅＋曲線2個分の空間を用意しておき、スクロールに応じて循環して利用する（リングバッファ）
+pub const ARC_COUNT: usize = WORLD_WIDTH / ARC_WIDTH;
 pub const SCROLL_PER_FRAME: i32 = 3;
 pub const SPACE_HEIGHT: i32 = 200; // 天井と床の間の高さ
 
@@ -42,7 +42,7 @@ impl Player {
 
     pub fn do_move(&mut self) {
         // x座標更新
-        self.x = (self.x + SCROLL_PER_FRAME) % BUFFER_WIDTH as i32;
+        self.x = (self.x + SCROLL_PER_FRAME) % WORLD_WIDTH as i32;
 
         // 軌跡を保存
         for i in 0..(self.old_ys.len() - 1) {
@@ -126,7 +126,8 @@ impl Game {
             self.is_over = true;
         }
 
-        self.scroll = (self.scroll + SCROLL_PER_FRAME) % BUFFER_WIDTH as i32;
+        // スクロール量更新
+        self.scroll = (self.scroll + SCROLL_PER_FRAME) % WORLD_WIDTH as i32;
 
         if self.scroll % (ARC_WIDTH as i32) < SCROLL_PER_FRAME {
             let index =

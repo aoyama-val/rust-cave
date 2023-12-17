@@ -20,7 +20,7 @@ struct Image<'a> {
 }
 
 struct Resources<'a> {
-    textures: HashMap<String, Image<'a>>,
+    images: HashMap<String, Image<'a>>,
 }
 
 pub fn main() -> Result<(), String> {
@@ -41,10 +41,6 @@ pub fn main() -> Result<(), String> {
 
     let texture_creator = canvas.texture_creator();
     let resources = load_resources(&texture_creator);
-    // let surface = sdl2::surface::Surface::new(0, 0, sdl2::pixels::PixelFormatEnum::ARGB32).unwrap();
-    // surface.
-    // surface.load_bmp("resources/image/numbers.bmp");
-    // sdl2::surface::load_bmp("resources/image/numbers.bmp").unwrap();
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -89,7 +85,7 @@ pub fn main() -> Result<(), String> {
 
 fn load_resources<'a>(texture_creator: &'a TextureCreator<WindowContext>) -> Resources {
     let mut resources = Resources {
-        textures: HashMap::new(),
+        images: HashMap::new(),
     };
 
     let image_paths = ["numbers.bmp"];
@@ -98,7 +94,7 @@ fn load_resources<'a>(texture_creator: &'a TextureCreator<WindowContext>) -> Res
         let temp_surface = sdl2::surface::Surface::load_bmp(Path::new(&full_path)).unwrap();
         let texture = texture_creator
             .create_texture_from_surface(&temp_surface)
-            .expect("cannot load image");
+            .expect(&format!("cannot load image: {}", path));
 
         let q = texture.query();
         let image: Image = Image {
@@ -106,7 +102,7 @@ fn load_resources<'a>(texture_creator: &'a TextureCreator<WindowContext>) -> Res
             w: q.width,
             h: q.height,
         };
-        resources.textures.insert(path.to_string(), image);
+        resources.images.insert(path.to_string(), image);
     }
     resources
 }
@@ -117,7 +113,7 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
 
     canvas.set_draw_color(Color::RGB(238, 130, 238));
     for i in 0..SCREEN_WIDTH {
-        let x = (game.scroll + i as i32) % BUFFER_WIDTH as i32;
+        let x = (game.scroll + i as i32) % WORLD_WIDTH as i32;
 
         // render ceiling
         canvas.draw_line(
@@ -135,7 +131,7 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
     // render player
     canvas.set_draw_color(Color::RGB(255, 255, 0));
     canvas.fill_rect(Rect::new(
-        (game.player.x - game.scroll + BUFFER_WIDTH as i32) % BUFFER_WIDTH as i32,
+        (game.player.x - game.scroll + WORLD_WIDTH as i32) % WORLD_WIDTH as i32,
         game.player.y,
         PLAYER_SIZE,
         PLAYER_SIZE,
@@ -143,9 +139,9 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
     for i in 0..(game.player.old_ys.len()) {
         canvas.set_draw_color(Color::RGBA(255, 255, 0, (255 - 40 * (i + 1)) as u8));
         canvas.fill_rect(Rect::new(
-            (game.player.x - game.scroll + BUFFER_WIDTH as i32
+            (game.player.x - game.scroll + WORLD_WIDTH as i32
                 - PLAYER_SIZE as i32 * (i + 1) as i32)
-                % BUFFER_WIDTH as i32,
+                % WORLD_WIDTH as i32,
             game.player.old_ys[i],
             PLAYER_SIZE,
             PLAYER_SIZE,
@@ -178,7 +174,7 @@ fn render_number(
     numstr: String,
 ) {
     let mut x = x;
-    let image = resources.textures.get("numbers.bmp").unwrap();
+    let image = resources.images.get("numbers.bmp").unwrap();
     let digit_width_in_px = 8;
     for c in numstr.chars() {
         if 0x30 <= c as i32 && c as i32 <= 0x39 {
