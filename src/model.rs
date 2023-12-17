@@ -55,7 +55,7 @@ pub struct Game {
     pub frame: i32,
     pub scroll: i32,
     pub player: Player,
-    pub arcs: [Arc; BUFFER_WIDTH / ARC_WIDTH],
+    pub arcs: [Arc; ARC_COUNT],
 }
 
 impl Game {
