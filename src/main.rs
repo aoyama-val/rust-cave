@@ -32,12 +32,12 @@ pub fn main() -> Result<(), String> {
     let mut game = Game::new();
 
     'running: loop {
-        let mut command = "";
+        let mut command = Command::None;
         if event_pump
             .keyboard_state()
             .is_scancode_pressed(sdl2::keyboard::Scancode::Up)
         {
-            command = "up";
+            command = Command::Up;
             println!("up");
         }
         for event in event_pump.poll_iter() {

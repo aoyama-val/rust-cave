@@ -4,6 +4,11 @@ use std::{ops::Range, time};
 pub const SCREEN_WIDTH: usize = 640;
 pub const SCREEN_HEIGHT: usize = 420;
 
+pub enum Command {
+    None,
+    Up,
+}
+
 pub struct Player {
     pub x: i32,
     pub y: i32,
@@ -72,14 +77,14 @@ impl Game {
         game
     }
 
-    pub fn update(&mut self, command: &str) {
+    pub fn update(&mut self, command: Command) {
         if self.is_over {
             return;
         }
 
         match command {
-            "up" => self.player.up(),
-            _ => {}
+            Command::Up => self.player.up(),
+            Command::None => {}
         }
 
         self.player.apply_gravity();
