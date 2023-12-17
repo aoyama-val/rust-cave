@@ -134,6 +134,7 @@ fn create_curve(
     }
 }
 
+// https://stacstar.jp/blog/?p=975
 fn hermite(p0: f32, p1: f32, v0: f32, v1: f32, t: f32) -> f32 {
     (2.0 * p0 - 2.0 * p1 + v0 + v1) * t * t * t
         + (-3.0 * p0 + 3.0 * p1 - 2.0 * v0 - v1) * t * t

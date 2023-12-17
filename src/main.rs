@@ -31,6 +31,9 @@ pub fn main() -> Result<(), String> {
 
     let mut game = Game::new();
 
+    println!("Keys:");
+    println!("    Up : Move player up");
+
     'running: loop {
         let started = SystemTime::now();
 
