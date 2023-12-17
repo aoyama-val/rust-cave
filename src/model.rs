@@ -65,7 +65,8 @@ impl Game {
             .duration_since(time::UNIX_EPOCH)
             .expect("SystemTime before UNIX EPOCH!")
             .as_secs();
-        let rng = StdRng::seed_from_u64(timestamp);
+        // let rng = StdRng::seed_from_u64(timestamp);
+        let rng = StdRng::seed_from_u64(0);
 
         let mut game = Game {
             rng: rng,
@@ -124,20 +125,20 @@ impl Game {
         self.scroll = (self.scroll + SCROLL_SPEED) % BUFFER_WIDTH as i32;
         self.scroll_since_last_arc_created += SCROLL_SPEED;
 
-        if self.scroll_since_last_arc_created >= ARC_WIDTH as i32 {
+        if self.scroll % (ARC_WIDTH as i32) < SCROLL_SPEED {
             let index =
                 ((self.scroll / ARC_WIDTH as i32) - 1 + ARC_COUNT as i32) % ARC_COUNT as i32;
             let prev_index = (index - 1 + ARC_COUNT as i32) % ARC_COUNT as i32;
             let prev_arc = self.arcs[prev_index as usize];
-            println!(
-                "frame = {}, scroll = {}, index = {}, prev_index = {}",
-                self.frame, self.scroll, index, prev_index
-            );
             create_arc(
                 &mut self.rng,
                 -40..40,
                 &mut self.arcs[index as usize],
                 &prev_arc,
+            );
+            println!(
+                "Created: index = {}, p0 = {}, prev.p1 = {}, p1 = {}",
+                index, self.arcs[index as usize].p0, prev_arc.p1, self.arcs[index as usize].p1
             );
             self.scroll_since_last_arc_created = 0;
         }
@@ -148,11 +149,11 @@ impl Game {
 
 #[derive(Clone, Copy, Default)]
 pub struct Arc {
-    p0: f32,
-    v0: f32,
-    p1: f32,
-    v1: f32,
-    ys: [f32; ARC_WIDTH],
+    pub p0: f32,
+    pub v0: f32,
+    pub p1: f32,
+    pub v1: f32,
+    pub ys: [f32; ARC_WIDTH],
 }
 
 fn create_arc(rng: &mut StdRng, range: Range<i32>, arc: &mut Arc, prev_arc: &Arc) {
