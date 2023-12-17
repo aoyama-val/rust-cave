@@ -54,7 +54,6 @@ pub struct Game {
     pub is_over: bool,
     pub frame: i32,
     pub scroll: i32,
-    pub scroll_since_last_arc_created: i32,
     pub player: Player,
     pub arcs: [Arc; BUFFER_WIDTH / ARC_WIDTH],
 }
@@ -74,7 +73,6 @@ impl Game {
             is_over: false,
             frame: 0,
             scroll: 0,
-            scroll_since_last_arc_created: 0,
             player: Player::new(),
             arcs: [Arc::default(); ARC_COUNT],
         };
@@ -125,7 +123,6 @@ impl Game {
         }
 
         self.scroll = (self.scroll + SCROLL_SPEED) % BUFFER_WIDTH as i32;
-        self.scroll_since_last_arc_created += SCROLL_SPEED;
 
         if self.scroll % (ARC_WIDTH as i32) < SCROLL_SPEED {
             let index =
@@ -142,7 +139,6 @@ impl Game {
             //     "Created: index = {}, p0 = {}, prev.p1 = {}, p1 = {}",
             //     index, self.arcs[index as usize].p0, prev_arc.p1, self.arcs[index as usize].p1
             // );
-            self.scroll_since_last_arc_created = 0;
         }
 
         self.frame += 1;
