@@ -81,6 +81,7 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
             Point::new(i as i32, game.get_ceiling(x)),
         )?;
     }
+    // panic!("");
 
     // render floor
     // for i in 0..SCREEN_WIDTH {
@@ -90,9 +91,6 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
     //         Point::new(i as i32, SCREEN_HEIGHT as i32 - 1),
     //     )?;
     // }
-    if (game.player.x - game.scroll + BUFFER_WIDTH as i32) % BUFFER_WIDTH as i32 != 20 {
-        panic!("player.x = {}, scroll = {}", game.player.x, game.scroll);
-    }
 
     // render player
     canvas.set_draw_color(Color::RGB(255, 255, 0));

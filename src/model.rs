@@ -4,7 +4,7 @@ use std::{ops::Range, time};
 pub const SCREEN_WIDTH: usize = 640;
 pub const SCREEN_HEIGHT: usize = 420;
 pub const ARC_WIDTH: usize = 20;
-pub const BUFFER_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH;
+pub const BUFFER_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH * 2;
 pub const ARC_COUNT: usize = BUFFER_WIDTH / ARC_WIDTH;
 pub const SCROLL_SPEED: i32 = 3;
 
@@ -74,7 +74,7 @@ impl Game {
             scroll: 0,
             scroll_since_last_arc_created: 0,
             player: Player::new(),
-            arcs: [Arc::default(); 33],
+            arcs: [Arc::default(); ARC_COUNT],
         };
 
         let mut prev_arc = Arc {
