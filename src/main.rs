@@ -62,13 +62,18 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
-    canvas.set_draw_color(Color::RGB(255, 0, 0));
-
+    // render ceiling
+    canvas.set_draw_color(Color::RGB(238, 130, 238));
     for i in 0..SCREEN_WIDTH {
         let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
-        canvas.draw_point(Point::new(i as i32, game.ys[x as usize] as i32))?;
+        // canvas.draw_point(Point::new(i as i32, game.ys[x as usize] as i32))?;
+        canvas.draw_line(
+            Point::new(i as i32, 0),
+            Point::new(i as i32, game.ys[x as usize] as i32),
+        )?;
     }
 
+    // render player
     canvas.set_draw_color(Color::RGB(255, 255, 0));
     canvas.fill_rect(Rect::new(
         game.player.x,
