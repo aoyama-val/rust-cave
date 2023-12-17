@@ -3,11 +3,11 @@ use std::{ops::Range, time};
 
 pub const SCREEN_WIDTH: usize = 640;
 pub const SCREEN_HEIGHT: usize = 420;
-pub const ARC_WIDTH: usize = 20;
-pub const BUFFER_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH * 2;
+pub const ARC_WIDTH: usize = 20; // 1個の3次曲線の幅
+pub const BUFFER_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH * 2; // スクロールさせるため、画面幅＋2個分の空間を用意しておく
 pub const ARC_COUNT: usize = BUFFER_WIDTH / ARC_WIDTH;
-pub const SCROLL_SPEED: i32 = 3;
-pub const SPACE_HEIGHT: i32 = 200;
+pub const SCROLL_PER_FRAME: i32 = 3;
+pub const SPACE_HEIGHT: i32 = 200; // 天井と床の間の高さ
 
 pub enum Command {
     None,
@@ -17,8 +17,8 @@ pub enum Command {
 pub struct Player {
     pub x: i32,
     pub y: i32,
-    pub velocity: f32,
-    pub old_ys: [i32; 4],
+    pub vy: f32,
+    pub old_ys: [i32; 4], // 軌跡
 }
 
 impl Player {
@@ -26,26 +26,32 @@ impl Player {
         let player = Player {
             x: 20,
             y: 200,
-            velocity: 0.0,
+            vy: 0.0,
             old_ys: [20; 4],
         };
         player
     }
 
     pub fn up(&mut self) {
-        self.velocity -= 1.8;
+        self.vy -= 1.8;
     }
 
     pub fn apply_gravity(&mut self) {
-        self.velocity += 0.3;
+        self.vy += 0.3;
     }
 
     pub fn do_move(&mut self) {
+        // x座標更新
+        self.x = (self.x + SCROLL_PER_FRAME) % BUFFER_WIDTH as i32;
+
+        // 軌跡を保存
         for i in 0..(self.old_ys.len() - 1) {
             self.old_ys[i + 1] = self.old_ys[i];
         }
         self.old_ys[0] = self.y;
-        self.y = (self.y as f32 + self.velocity) as i32;
+
+        // y座標更新
+        self.y = (self.y as f32 + self.vy) as i32;
     }
 }
 
@@ -53,9 +59,9 @@ pub struct Game {
     pub rng: StdRng,
     pub is_over: bool,
     pub frame: i32,
-    pub scroll: i32,
+    pub scroll: i32, // スクロール位置（画面左端に表示する座標）
     pub player: Player,
-    pub arcs: [Arc; ARC_COUNT],
+    pub arcs: [Arc; ARC_COUNT], // 天井の曲線
 }
 
 impl Game {
@@ -66,7 +72,6 @@ impl Game {
             .expect("SystemTime before UNIX EPOCH!")
             .as_secs();
         let rng = StdRng::seed_from_u64(timestamp);
-        // let rng = StdRng::seed_from_u64(0);
 
         let mut game = Game {
             rng: rng,
@@ -114,7 +119,6 @@ impl Game {
 
         self.player.apply_gravity();
         self.player.do_move();
-        self.player.x = (self.player.x + SCROLL_SPEED) % BUFFER_WIDTH as i32;
 
         if self.player.y <= self.get_ceiling(self.player.x)
             || self.player.y >= self.get_floor(self.player.x)
@@ -122,9 +126,9 @@ impl Game {
             self.is_over = true;
         }
 
-        self.scroll = (self.scroll + SCROLL_SPEED) % BUFFER_WIDTH as i32;
+        self.scroll = (self.scroll + SCROLL_PER_FRAME) % BUFFER_WIDTH as i32;
 
-        if self.scroll % (ARC_WIDTH as i32) < SCROLL_SPEED {
+        if self.scroll % (ARC_WIDTH as i32) < SCROLL_PER_FRAME {
             let index =
                 ((self.scroll / ARC_WIDTH as i32) - 1 + ARC_COUNT as i32) % ARC_COUNT as i32;
             let prev_index = (index - 1 + ARC_COUNT as i32) % ARC_COUNT as i32;
@@ -171,6 +175,7 @@ fn create_arc(rng: &mut StdRng, range: Range<i32>, arc: &mut Arc, prev_arc: &Arc
     }
 }
 
+// エルミート補間（p0, p1をそれぞれ傾きv0, v1で通る3次曲線で補間）
 // https://stacstar.jp/blog/?p=975
 fn hermite(p0: f32, p1: f32, v0: f32, v1: f32, t: f32) -> f32 {
     (2.0 * p0 - 2.0 * p1 + v0 + v1) * t * t * t
