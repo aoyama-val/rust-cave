@@ -44,7 +44,7 @@ pub struct Game {
     pub is_over: bool,
     pub frame: i32,
     pub scroll: i32,
-    pub ys: [i32; SCREEN_WIDTH],
+    pub ceiling: [i32; SCREEN_WIDTH],
     pub floor: [i32; SCREEN_WIDTH],
     pub player: Player,
 }
@@ -63,11 +63,11 @@ impl Game {
             is_over: false,
             frame: 0,
             scroll: 0,
-            ys: [0; SCREEN_WIDTH],
+            ceiling: [0; SCREEN_WIDTH],
             floor: [0; SCREEN_WIDTH],
             player: Player::new(),
         };
-        create_curve(&mut game.rng, &mut game.ys, -40..40, 0.0, 0.0);
+        create_curve(&mut game.rng, &mut game.ceiling, -40..40, 0.0, 0.0);
         create_curve(&mut game.rng, &mut game.floor, -40..40, 350.0, 0.0);
         game
     }
@@ -86,7 +86,9 @@ impl Game {
         self.player.do_move();
 
         let x = (self.scroll + self.player.x as i32) % SCREEN_WIDTH as i32;
-        if self.player.y <= self.ys[x as usize] || self.player.y >= self.floor[x as usize] as i32 {
+        if self.player.y <= self.ceiling[x as usize]
+            || self.player.y >= self.floor[x as usize] as i32
+        {
             self.is_over = true;
         }
 

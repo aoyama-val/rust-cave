@@ -68,7 +68,7 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
         let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
         canvas.draw_line(
             Point::new(i as i32, 0),
-            Point::new(i as i32, game.ys[x as usize] as i32),
+            Point::new(i as i32, game.ceiling[x as usize] as i32),
         )?;
     }
 
