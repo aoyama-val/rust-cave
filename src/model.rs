@@ -55,6 +55,15 @@ impl Player {
     }
 }
 
+#[derive(Clone, Copy, Default)]
+pub struct Arc {
+    pub p0: f32,
+    pub v0: f32,
+    pub p1: f32,
+    pub v1: f32,
+    pub ys: [f32; ARC_WIDTH],
+}
+
 pub struct Game {
     pub rng: StdRng,
     pub is_over: bool,
@@ -82,16 +91,15 @@ impl Game {
             arcs: [Arc::default(); ARC_COUNT],
         };
 
-        let mut prev_arc = Arc {
+        game.arcs[0] = Arc {
             p0: 0.0,
             v0: 0.0,
             p1: 30.0,
             v1: 0.0,
             ys: [0.0; ARC_WIDTH],
         };
-        for i in 0..game.arcs.len() {
-            create_arc(&mut game.rng, -40..40, &mut game.arcs[i], &prev_arc);
-            prev_arc = game.arcs[i];
+        for i in 1..ARC_COUNT {
+            game.create_arc(i);
         }
 
         game.player.y = (game.get_ceiling(game.player.x) + game.get_floor(game.player.x)) / 2 - 50;
@@ -105,6 +113,30 @@ impl Game {
 
     pub fn get_floor(&self, x: i32) -> i32 {
         self.get_ceiling(x) + SPACE_HEIGHT
+    }
+
+    pub fn create_arc(&mut self, index: usize) {
+        let prev_index = if index == 0 { ARC_COUNT - 1 } else { index - 1 };
+        let prev_arc = self.arcs[prev_index];
+        let arc = &mut self.arcs[index];
+        arc.p0 = prev_arc.p1;
+        arc.v0 = prev_arc.v1;
+        arc.p1 = arc.p0 + self.rng.gen_range(-40..40) as f32;
+        if arc.p1 < 0.0 {
+            arc.p1 = 0.0;
+        }
+        if arc.p1 > 300.0 {
+            arc.p1 = 300.0;
+        }
+        arc.v1 = self.rng.gen();
+        for i in 0..arc.ys.len() {
+            let t = (i as f32) / (ARC_WIDTH as f32);
+            arc.ys[i] = hermite(arc.p0, arc.p1, arc.v0, arc.v1, t);
+        }
+        println!(
+            "Created: index = {}, p0 = {}, prev.p1 = {}, p1 = {}",
+            index, self.arcs[index].p0, prev_arc.p1, self.arcs[index].p1
+        );
     }
 
     pub fn update(&mut self, command: Command) {
@@ -130,49 +162,11 @@ impl Game {
         self.scroll = (self.scroll + SCROLL_PER_FRAME) % WORLD_WIDTH as i32;
 
         if self.scroll % (ARC_WIDTH as i32) < SCROLL_PER_FRAME {
-            let index =
-                ((self.scroll / ARC_WIDTH as i32) - 1 + ARC_COUNT as i32) % ARC_COUNT as i32;
-            let prev_index = (index - 1 + ARC_COUNT as i32) % ARC_COUNT as i32;
-            let prev_arc = self.arcs[prev_index as usize];
-            create_arc(
-                &mut self.rng,
-                -40..40,
-                &mut self.arcs[index as usize],
-                &prev_arc,
-            );
-            // println!(
-            //     "Created: index = {}, p0 = {}, prev.p1 = {}, p1 = {}",
-            //     index, self.arcs[index as usize].p0, prev_arc.p1, self.arcs[index as usize].p1
-            // );
+            let index = ((self.scroll as usize / ARC_WIDTH) + ARC_COUNT - 1) % ARC_COUNT;
+            self.create_arc(index);
         }
 
         self.frame += 1;
-    }
-}
-
-#[derive(Clone, Copy, Default)]
-pub struct Arc {
-    pub p0: f32,
-    pub v0: f32,
-    pub p1: f32,
-    pub v1: f32,
-    pub ys: [f32; ARC_WIDTH],
-}
-
-fn create_arc(rng: &mut StdRng, range: Range<i32>, arc: &mut Arc, prev_arc: &Arc) {
-    arc.p0 = prev_arc.p1;
-    arc.v0 = prev_arc.v1;
-    arc.p1 = arc.p0 + rng.gen_range(range.clone()) as f32;
-    if arc.p1 < 0.0 {
-        arc.p1 = 0.0;
-    }
-    if arc.p1 > 300.0 {
-        arc.p1 = 300.0;
-    }
-    arc.v1 = rng.gen();
-    for i in 0..arc.ys.len() {
-        let t = (i as f32) / (ARC_WIDTH as f32);
-        arc.ys[i] = hermite(arc.p0, arc.p1, arc.v0, arc.v1, t);
     }
 }
 
