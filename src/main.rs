@@ -14,7 +14,6 @@ const PLAYER_SIZE: u32 = 4;
 
 pub fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
-    sdl_context.mouse().show_cursor(false);
 
     let video_subsystem = sdl_context.video()?;
     let window = video_subsystem
@@ -23,6 +22,8 @@ pub fn main() -> Result<(), String> {
         .opengl()
         .build()
         .map_err(|e| e.to_string())?;
+
+    sdl_context.mouse().show_cursor(false);
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     canvas.set_blend_mode(BlendMode::Blend);
