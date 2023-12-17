@@ -9,22 +9,24 @@ use std::time::Duration;
 mod model;
 use crate::model::*;
 
-const SCREEN_WIDTH: u32 = 640;
-const SCREEN_HEIGHT: u32 = 420;
 const FPS: u32 = 30;
 const PLAYER_SIZE: u32 = 4;
 
 pub fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
+    sdl_context.mouse().show_cursor(false);
+
     let video_subsystem = sdl_context.video()?;
     let window = video_subsystem
-        .window("rust-cave", SCREEN_WIDTH, SCREEN_HEIGHT)
+        .window("rust-cave", SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32)
         .position_centered()
         .opengl()
         .build()
         .map_err(|e| e.to_string())?;
+
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     canvas.set_blend_mode(BlendMode::Blend);
+
     let mut event_pump = sdl_context.event_pump()?;
 
     let mut game = Game::new();
@@ -66,10 +68,18 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
     canvas.set_draw_color(Color::RGB(238, 130, 238));
     for i in 0..SCREEN_WIDTH {
         let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
-        // canvas.draw_point(Point::new(i as i32, game.ys[x as usize] as i32))?;
         canvas.draw_line(
             Point::new(i as i32, 0),
             Point::new(i as i32, game.ys[x as usize] as i32),
+        )?;
+    }
+
+    // render floor
+    for i in 0..SCREEN_WIDTH {
+        let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
+        canvas.draw_line(
+            Point::new(i as i32, game.floor[x as usize] as i32),
+            Point::new(i as i32, SCREEN_HEIGHT as i32 - 1),
         )?;
     }
 
@@ -93,7 +103,7 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
 
     if game.is_over {
         canvas.set_draw_color(Color::RGBA(255, 0, 0, 128));
-        canvas.fill_rect(Rect::new(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))?;
+        canvas.fill_rect(Rect::new(0, 0, SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32))?;
     }
 
     canvas.present();

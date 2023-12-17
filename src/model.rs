@@ -1,9 +1,8 @@
 use rand::prelude::*;
-use std::time;
+use std::{ops::Range, time};
 
-use crate::SCREEN_HEIGHT;
-
-const SCREEN_WIDTH: usize = 640;
+pub const SCREEN_WIDTH: usize = 640;
+pub const SCREEN_HEIGHT: usize = 420;
 
 pub struct Player {
     pub x: i32,
@@ -46,6 +45,7 @@ pub struct Game {
     pub frame: i32,
     pub scroll: i32,
     pub ys: [i32; SCREEN_WIDTH],
+    pub floor: [i32; SCREEN_WIDTH],
     pub player: Player,
 }
 
@@ -64,34 +64,12 @@ impl Game {
             frame: 0,
             scroll: 0,
             ys: [0; SCREEN_WIDTH],
+            floor: [0; SCREEN_WIDTH],
             player: Player::new(),
         };
-        game.create_curve();
+        create_curve(&mut game.rng, &mut game.ys, -40..40, 0.0, 0.0);
+        create_curve(&mut game.rng, &mut game.floor, -40..40, 400.0, 0.0);
         game
-    }
-
-    fn create_curve(&mut self) {
-        let mut begin = 0;
-        let step = 20;
-        let mut prev_p: f32 = 0.0;
-        let mut prev_v: f32 = 0.0;
-        while begin < SCREEN_WIDTH {
-            let p0 = prev_p as f32;
-            let mut p1 = p0 + self.rng.gen_range(-40..40) as f32;
-            if p1 < 0.0 {
-                p1 = 0.0;
-            }
-            let v0 = prev_v;
-            let v1 = self.rng.gen();
-            for x in begin..(begin + step) {
-                let t = ((x - begin) as f32) / (step as f32);
-                // println!("{}", t);
-                self.ys[x] = hermite(p0, p1, v0, v1, t) as i32
-            }
-            prev_p = p1;
-            prev_v = v1;
-            begin += step;
-        }
     }
 
     pub fn update(&mut self, command: &str) {
@@ -108,12 +86,44 @@ impl Game {
         self.player.do_move();
 
         let x = (self.scroll + self.player.x as i32) % SCREEN_WIDTH as i32;
-        if self.player.y <= self.ys[x as usize] || self.player.y >= SCREEN_HEIGHT as i32 {
+        if self.player.y <= self.ys[x as usize] || self.player.y >= self.floor[x as usize] as i32 {
             self.is_over = true;
         }
 
         self.scroll += 3;
         self.frame += 1;
+    }
+}
+
+fn create_curve(
+    rng: &mut StdRng,
+    dst: &mut [i32; SCREEN_WIDTH],
+    range: Range<i32>,
+    prev_p: f32,
+    prev_v: f32,
+) {
+    let mut begin = 0;
+    let step = 20;
+    let mut prev_p: f32 = prev_p;
+    let mut prev_v: f32 = prev_v;
+    while begin < SCREEN_WIDTH {
+        let p0 = prev_p as f32;
+        let mut p1 = p0 + rng.gen_range(range.clone()) as f32;
+        if p1 < 0.0 {
+            p1 = 0.0;
+        }
+        if p1 > 420.0 {
+            p1 = 420.0;
+        }
+        let v0 = prev_v;
+        let v1 = rng.gen();
+        for x in begin..(begin + step) {
+            let t = ((x - begin) as f32) / (step as f32);
+            dst[x] = hermite(p0, p1, v0, v1, t) as i32
+        }
+        prev_p = p1;
+        prev_v = v1;
+        begin += step;
     }
 }
 
