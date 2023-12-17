@@ -2,15 +2,26 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
-use sdl2::render::{BlendMode, Canvas};
-use sdl2::video::Window;
+use sdl2::render::{BlendMode, Canvas, Texture, TextureCreator};
+use sdl2::video::{Window, WindowContext};
+use std::collections::HashMap;
+use std::path::Path;
 use std::time::{Duration, SystemTime};
-
 mod model;
 use crate::model::*;
 
 const FPS: u32 = 30;
 const PLAYER_SIZE: u32 = 4;
+
+struct Image<'a> {
+    texture: Texture<'a>,
+    w: u32,
+    h: u32,
+}
+
+struct Resources<'a> {
+    textures: HashMap<String, Image<'a>>,
+}
 
 pub fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -27,6 +38,13 @@ pub fn main() -> Result<(), String> {
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     canvas.set_blend_mode(BlendMode::Blend);
+
+    let texture_creator = canvas.texture_creator();
+    let resources = load_resources(&texture_creator);
+    // let surface = sdl2::surface::Surface::new(0, 0, sdl2::pixels::PixelFormatEnum::ARGB32).unwrap();
+    // surface.
+    // surface.load_bmp("resources/image/numbers.bmp");
+    // sdl2::surface::load_bmp("resources/image/numbers.bmp").unwrap();
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -56,7 +74,7 @@ pub fn main() -> Result<(), String> {
             }
         }
         game.update(command);
-        render(&mut canvas, &game)?;
+        render(&mut canvas, &game, &resources)?;
 
         let finished = SystemTime::now();
         let elapsed = finished.duration_since(started).unwrap();
@@ -69,7 +87,31 @@ pub fn main() -> Result<(), String> {
     Ok(())
 }
 
-fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
+fn load_resources<'a>(texture_creator: &'a TextureCreator<WindowContext>) -> Resources {
+    let mut resources = Resources {
+        textures: HashMap::new(),
+    };
+
+    let image_paths = ["numbers.bmp"];
+    for path in image_paths {
+        let full_path = "resources/image/".to_string() + path;
+        let temp_surface = sdl2::surface::Surface::load_bmp(Path::new(&full_path)).unwrap();
+        let texture = texture_creator
+            .create_texture_from_surface(&temp_surface)
+            .expect("cannot load image");
+
+        let q = texture.query();
+        let image: Image = Image {
+            texture: texture,
+            w: q.width,
+            h: q.height,
+        };
+        resources.textures.insert(path.to_string(), image);
+    }
+    resources
+}
+
+fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Result<(), String> {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
@@ -110,6 +152,14 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
         ))?;
     }
 
+    render_number(
+        canvas,
+        resources,
+        SCREEN_WIDTH as i32 - 8 * 8,
+        0,
+        format!("{0: >8}", game.frame),
+    );
+
     if game.is_over {
         canvas.set_draw_color(Color::RGBA(255, 0, 0, 128));
         canvas.fill_rect(Rect::new(0, 0, SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32))?;
@@ -118,4 +168,33 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
     canvas.present();
 
     Ok(())
+}
+
+fn render_number(
+    canvas: &mut Canvas<Window>,
+    resources: &Resources,
+    x: i32,
+    y: i32,
+    numstr: String,
+) {
+    let mut x = x;
+    let image = resources.textures.get("numbers.bmp").unwrap();
+    let digit_width_in_px = 8;
+    for c in numstr.chars() {
+        if 0x30 <= c as i32 && c as i32 <= 0x39 {
+            canvas
+                .copy(
+                    &image.texture,
+                    Rect::new(
+                        digit_width_in_px * (c as i32 - 0x30),
+                        0,
+                        digit_width_in_px as u32,
+                        image.h,
+                    ),
+                    Rect::new(x, y, digit_width_in_px as u32, image.h),
+                )
+                .unwrap();
+        }
+        x += digit_width_in_px;
+    }
 }

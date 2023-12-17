@@ -66,8 +66,8 @@ impl Game {
             .duration_since(time::UNIX_EPOCH)
             .expect("SystemTime before UNIX EPOCH!")
             .as_secs();
-        // let rng = StdRng::seed_from_u64(timestamp);
-        let rng = StdRng::seed_from_u64(0);
+        let rng = StdRng::seed_from_u64(timestamp);
+        // let rng = StdRng::seed_from_u64(0);
 
         let mut game = Game {
             rng: rng,
@@ -138,10 +138,10 @@ impl Game {
                 &mut self.arcs[index as usize],
                 &prev_arc,
             );
-            println!(
-                "Created: index = {}, p0 = {}, prev.p1 = {}, p1 = {}",
-                index, self.arcs[index as usize].p0, prev_arc.p1, self.arcs[index as usize].p1
-            );
+            // println!(
+            //     "Created: index = {}, p0 = {}, prev.p1 = {}, p1 = {}",
+            //     index, self.arcs[index as usize].p0, prev_arc.p1, self.arcs[index as usize].p1
+            // );
             self.scroll_since_last_arc_created = 0;
         }
 
