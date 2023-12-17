@@ -3,6 +3,8 @@ use std::{ops::Range, time};
 
 pub const SCREEN_WIDTH: usize = 640;
 pub const SCREEN_HEIGHT: usize = 420;
+pub const ARC_WIDTH: usize = 20;
+pub const BUFFER_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH;
 
 pub enum Command {
     None,
@@ -49,8 +51,8 @@ pub struct Game {
     pub is_over: bool,
     pub frame: i32,
     pub scroll: i32,
-    pub ceiling: [i32; SCREEN_WIDTH],
-    pub floor: [i32; SCREEN_WIDTH],
+    pub ceiling: [i32; BUFFER_WIDTH],
+    pub floor: [i32; BUFFER_WIDTH],
     pub player: Player,
 }
 
@@ -68,8 +70,8 @@ impl Game {
             is_over: false,
             frame: 0,
             scroll: 0,
-            ceiling: [0; SCREEN_WIDTH],
-            floor: [0; SCREEN_WIDTH],
+            ceiling: [0; BUFFER_WIDTH],
+            floor: [0; BUFFER_WIDTH],
             player: Player::new(),
         };
         create_curve(&mut game.rng, &mut game.ceiling, -40..40, 0.0, 0.0);
@@ -104,13 +106,13 @@ impl Game {
 
 fn create_curve(
     rng: &mut StdRng,
-    dst: &mut [i32; SCREEN_WIDTH],
+    dst: &mut [i32; BUFFER_WIDTH],
     range: Range<i32>,
     prev_p: f32,
     prev_v: f32,
 ) {
     let mut begin = 0;
-    let step = 20;
+    let step = ARC_WIDTH;
     let mut prev_p: f32 = prev_p;
     let mut prev_v: f32 = prev_v;
     while begin < SCREEN_WIDTH {
