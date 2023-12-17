@@ -7,6 +7,7 @@ pub const ARC_WIDTH: usize = 20;
 pub const BUFFER_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH * 2;
 pub const ARC_COUNT: usize = BUFFER_WIDTH / ARC_WIDTH;
 pub const SCROLL_SPEED: i32 = 3;
+pub const SPACE_HEIGHT: i32 = 200;
 
 pub enum Command {
     None,
@@ -90,6 +91,8 @@ impl Game {
             prev_arc = game.arcs[i];
         }
 
+        game.player.y = (game.get_ceiling(game.player.x) + game.get_floor(game.player.x)) / 2 - 50;
+
         game
     }
 
@@ -98,8 +101,7 @@ impl Game {
     }
 
     pub fn get_floor(&self, x: i32) -> i32 {
-        // self.arcs[x as usize / ARC_WIDTH].ys[x as usize % ARC_WIDTH] as i32
-        440
+        self.get_ceiling(x) + SPACE_HEIGHT
     }
 
     pub fn update(&mut self, command: Command) {
@@ -163,8 +165,8 @@ fn create_arc(rng: &mut StdRng, range: Range<i32>, arc: &mut Arc, prev_arc: &Arc
     if arc.p1 < 0.0 {
         arc.p1 = 0.0;
     }
-    if arc.p1 > 420.0 {
-        arc.p1 = 420.0;
+    if arc.p1 > 300.0 {
+        arc.p1 = 300.0;
     }
     arc.v1 = rng.gen();
     for i in 0..arc.ys.len() {

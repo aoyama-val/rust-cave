@@ -72,25 +72,22 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
-    // render ceiling
     canvas.set_draw_color(Color::RGB(238, 130, 238));
     for i in 0..SCREEN_WIDTH {
         let x = (game.scroll + i as i32) % BUFFER_WIDTH as i32;
+
+        // render ceiling
         canvas.draw_line(
             Point::new(i as i32, 0),
             Point::new(i as i32, game.get_ceiling(x)),
         )?;
-    }
-    // panic!("");
 
-    // render floor
-    // for i in 0..SCREEN_WIDTH {
-    //     let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
-    //     canvas.draw_line(
-    //         Point::new(i as i32, game.floor[x as usize] as i32),
-    //         Point::new(i as i32, SCREEN_HEIGHT as i32 - 1),
-    //     )?;
-    // }
+        // render floor
+        canvas.draw_line(
+            Point::new(i as i32, game.get_floor(x)),
+            Point::new(i as i32, SCREEN_HEIGHT as i32 - 1),
+        )?;
+    }
 
     // render player
     canvas.set_draw_color(Color::RGB(255, 255, 0));
