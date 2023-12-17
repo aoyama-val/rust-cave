@@ -4,7 +4,7 @@ use std::time;
 pub const SCREEN_WIDTH: usize = 640;
 pub const SCREEN_HEIGHT: usize = 420;
 pub const ARC_WIDTH: usize = 20; // 1個の3次曲線の幅
-pub const WORLD_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH * 2; // 世界の広さ。画面幅＋曲線2個分の空間を用意しておき、スクロールに応じて循環して利用する（リングバッファ）
+pub const WORLD_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH * 1; // 世界の広さ。画面幅＋曲線1個分の空間を用意しておき、スクロールに応じて循環して利用する（リングバッファ）
 pub const ARC_COUNT: usize = WORLD_WIDTH / ARC_WIDTH;
 pub const SCROLL_PER_FRAME: i32 = 3;
 pub const SPACE_HEIGHT: i32 = 200; // 天井と床の間の高さ
@@ -156,6 +156,7 @@ impl Game {
         // スクロール量更新
         self.scroll = (self.scroll + SCROLL_PER_FRAME) % WORLD_WIDTH as i32;
 
+        // 新しいarcに入ったら、直前のarc（もう表示していない）を更新する
         if self.scroll % (ARC_WIDTH as i32) < SCROLL_PER_FRAME {
             let index = ((self.scroll as usize / ARC_WIDTH) + ARC_COUNT - 1) % ARC_COUNT;
             self.create_arc(index);
