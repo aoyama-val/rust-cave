@@ -5,6 +5,8 @@ pub const SCREEN_WIDTH: usize = 640;
 pub const SCREEN_HEIGHT: usize = 420;
 pub const ARC_WIDTH: usize = 20;
 pub const BUFFER_WIDTH: usize = SCREEN_WIDTH + ARC_WIDTH;
+pub const ARC_COUNT: usize = BUFFER_WIDTH / ARC_WIDTH;
+pub const SCROLL_SPEED: i32 = 3;
 
 pub enum Command {
     None,
@@ -51,9 +53,9 @@ pub struct Game {
     pub is_over: bool,
     pub frame: i32,
     pub scroll: i32,
-    pub ceiling: [i32; BUFFER_WIDTH],
-    pub floor: [i32; BUFFER_WIDTH],
+    pub scroll_since_last_arc_created: i32,
     pub player: Player,
+    pub arcs: [Arc; BUFFER_WIDTH / ARC_WIDTH],
 }
 
 impl Game {
@@ -70,13 +72,33 @@ impl Game {
             is_over: false,
             frame: 0,
             scroll: 0,
-            ceiling: [0; BUFFER_WIDTH],
-            floor: [0; BUFFER_WIDTH],
+            scroll_since_last_arc_created: 0,
             player: Player::new(),
+            arcs: [Arc::default(); 33],
         };
-        create_curve(&mut game.rng, &mut game.ceiling, -40..40, 0.0, 0.0);
-        create_curve(&mut game.rng, &mut game.floor, -40..40, 350.0, 0.0);
+
+        let mut prev_arc = Arc {
+            p0: 0.0,
+            v0: 0.0,
+            p1: 30.0,
+            v1: 0.0,
+            ys: [0.0; ARC_WIDTH],
+        };
+        for i in 0..game.arcs.len() {
+            create_arc(&mut game.rng, -40..40, &mut game.arcs[i], &prev_arc);
+            prev_arc = game.arcs[i];
+        }
+
         game
+    }
+
+    pub fn get_ceiling(&self, x: i32) -> i32 {
+        self.arcs[x as usize / ARC_WIDTH].ys[x as usize % ARC_WIDTH] as i32
+    }
+
+    pub fn get_floor(&self, x: i32) -> i32 {
+        // self.arcs[x as usize / ARC_WIDTH].ys[x as usize % ARC_WIDTH] as i32
+        440
     }
 
     pub fn update(&mut self, command: Command) {
@@ -91,48 +113,62 @@ impl Game {
 
         self.player.apply_gravity();
         self.player.do_move();
+        self.player.x = (self.player.x + SCROLL_SPEED) % BUFFER_WIDTH as i32;
 
-        let x = (self.scroll + self.player.x as i32) % SCREEN_WIDTH as i32;
-        if self.player.y <= self.ceiling[x as usize]
-            || self.player.y >= self.floor[x as usize] as i32
+        if self.player.y <= self.get_ceiling(self.player.x)
+            || self.player.y >= self.get_floor(self.player.x)
         {
             self.is_over = true;
         }
 
-        self.scroll += 3;
+        self.scroll = (self.scroll + SCROLL_SPEED) % BUFFER_WIDTH as i32;
+        self.scroll_since_last_arc_created += SCROLL_SPEED;
+
+        if self.scroll_since_last_arc_created >= ARC_WIDTH as i32 {
+            let index =
+                ((self.scroll / ARC_WIDTH as i32) - 1 + ARC_COUNT as i32) % ARC_COUNT as i32;
+            let prev_index = (index - 1 + ARC_COUNT as i32) % ARC_COUNT as i32;
+            let prev_arc = self.arcs[prev_index as usize];
+            println!(
+                "frame = {}, scroll = {}, index = {}, prev_index = {}",
+                self.frame, self.scroll, index, prev_index
+            );
+            create_arc(
+                &mut self.rng,
+                -40..40,
+                &mut self.arcs[index as usize],
+                &prev_arc,
+            );
+            self.scroll_since_last_arc_created = 0;
+        }
+
         self.frame += 1;
     }
 }
 
-fn create_curve(
-    rng: &mut StdRng,
-    dst: &mut [i32; BUFFER_WIDTH],
-    range: Range<i32>,
-    prev_p: f32,
-    prev_v: f32,
-) {
-    let mut begin = 0;
-    let step = ARC_WIDTH;
-    let mut prev_p: f32 = prev_p;
-    let mut prev_v: f32 = prev_v;
-    while begin < SCREEN_WIDTH {
-        let p0 = prev_p as f32;
-        let mut p1 = p0 + rng.gen_range(range.clone()) as f32;
-        if p1 < 0.0 {
-            p1 = 0.0;
-        }
-        if p1 > 420.0 {
-            p1 = 420.0;
-        }
-        let v0 = prev_v;
-        let v1 = rng.gen();
-        for x in begin..(begin + step) {
-            let t = ((x - begin) as f32) / (step as f32);
-            dst[x] = hermite(p0, p1, v0, v1, t) as i32
-        }
-        prev_p = p1;
-        prev_v = v1;
-        begin += step;
+#[derive(Clone, Copy, Default)]
+pub struct Arc {
+    p0: f32,
+    v0: f32,
+    p1: f32,
+    v1: f32,
+    ys: [f32; ARC_WIDTH],
+}
+
+fn create_arc(rng: &mut StdRng, range: Range<i32>, arc: &mut Arc, prev_arc: &Arc) {
+    arc.p0 = prev_arc.p1;
+    arc.v0 = prev_arc.v1;
+    arc.p1 = arc.p0 + rng.gen_range(range.clone()) as f32;
+    if arc.p1 < 0.0 {
+        arc.p1 = 0.0;
+    }
+    if arc.p1 > 420.0 {
+        arc.p1 = 420.0;
+    }
+    arc.v1 = rng.gen();
+    for i in 0..arc.ys.len() {
+        let t = (i as f32) / (ARC_WIDTH as f32);
+        arc.ys[i] = hermite(arc.p0, arc.p1, arc.v0, arc.v1, t);
     }
 }
 

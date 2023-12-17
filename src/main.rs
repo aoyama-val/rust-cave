@@ -75,26 +75,29 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
     // render ceiling
     canvas.set_draw_color(Color::RGB(238, 130, 238));
     for i in 0..SCREEN_WIDTH {
-        let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
+        let x = (game.scroll + i as i32) % BUFFER_WIDTH as i32;
         canvas.draw_line(
             Point::new(i as i32, 0),
-            Point::new(i as i32, game.ceiling[x as usize] as i32),
+            Point::new(i as i32, game.get_ceiling(x)),
         )?;
     }
 
     // render floor
-    for i in 0..SCREEN_WIDTH {
-        let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
-        canvas.draw_line(
-            Point::new(i as i32, game.floor[x as usize] as i32),
-            Point::new(i as i32, SCREEN_HEIGHT as i32 - 1),
-        )?;
+    // for i in 0..SCREEN_WIDTH {
+    //     let x = (game.scroll + i as i32) % SCREEN_WIDTH as i32;
+    //     canvas.draw_line(
+    //         Point::new(i as i32, game.floor[x as usize] as i32),
+    //         Point::new(i as i32, SCREEN_HEIGHT as i32 - 1),
+    //     )?;
+    // }
+    if (game.player.x - game.scroll + BUFFER_WIDTH as i32) % BUFFER_WIDTH as i32 != 20 {
+        panic!("player.x = {}, scroll = {}", game.player.x, game.scroll);
     }
 
     // render player
     canvas.set_draw_color(Color::RGB(255, 255, 0));
     canvas.fill_rect(Rect::new(
-        game.player.x,
+        (game.player.x - game.scroll + BUFFER_WIDTH as i32) % BUFFER_WIDTH as i32,
         game.player.y,
         PLAYER_SIZE,
         PLAYER_SIZE,
@@ -102,7 +105,9 @@ fn render(canvas: &mut Canvas<Window>, game: &Game) -> Result<(), String> {
     for i in 0..(game.player.old_ys.len()) {
         canvas.set_draw_color(Color::RGBA(255, 255, 0, (255 - 40 * (i + 1)) as u8));
         canvas.fill_rect(Rect::new(
-            game.player.x - PLAYER_SIZE as i32 * (i + 1) as i32,
+            (game.player.x - game.scroll + BUFFER_WIDTH as i32
+                - PLAYER_SIZE as i32 * (i + 1) as i32)
+                % BUFFER_WIDTH as i32,
             game.player.old_ys[i],
             PLAYER_SIZE,
             PLAYER_SIZE,
