@@ -23,7 +23,7 @@ impl Player {
     }
 
     pub fn up(&mut self) {
-        self.velocity -= 6.0;
+        self.velocity -= 2.3;
     }
 
     pub fn apply_gravity(&mut self) {
@@ -68,7 +68,7 @@ impl Game {
             player: Player::new(),
         };
         create_curve(&mut game.rng, &mut game.ys, -40..40, 0.0, 0.0);
-        create_curve(&mut game.rng, &mut game.floor, -40..40, 400.0, 0.0);
+        create_curve(&mut game.rng, &mut game.floor, -40..40, 350.0, 0.0);
         game
     }
 

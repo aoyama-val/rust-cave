@@ -33,6 +33,13 @@ pub fn main() -> Result<(), String> {
 
     'running: loop {
         let mut command = "";
+        if event_pump
+            .keyboard_state()
+            .is_scancode_pressed(sdl2::keyboard::Scancode::Up)
+        {
+            command = "up";
+            println!("up");
+        }
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -40,15 +47,6 @@ pub fn main() -> Result<(), String> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                Event::KeyDown {
-                    keycode: Some(code),
-                    ..
-                } => {
-                    command = match code {
-                        Keycode::Up => "up",
-                        _ => "",
-                    };
-                }
                 _ => {}
             }
         }
