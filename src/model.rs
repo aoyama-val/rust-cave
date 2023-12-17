@@ -28,7 +28,7 @@ impl Player {
     }
 
     pub fn up(&mut self) {
-        self.velocity -= 2.3;
+        self.velocity -= 1.8;
     }
 
     pub fn apply_gravity(&mut self) {

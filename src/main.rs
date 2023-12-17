@@ -4,7 +4,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{BlendMode, Canvas};
 use sdl2::video::Window;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 mod model;
 use crate::model::*;
@@ -32,13 +32,14 @@ pub fn main() -> Result<(), String> {
     let mut game = Game::new();
 
     'running: loop {
+        let started = SystemTime::now();
+
         let mut command = Command::None;
         if event_pump
             .keyboard_state()
             .is_scancode_pressed(sdl2::keyboard::Scancode::Up)
         {
             command = Command::Up;
-            println!("up");
         }
         for event in event_pump.poll_iter() {
             match event {
@@ -52,7 +53,13 @@ pub fn main() -> Result<(), String> {
         }
         game.update(command);
         render(&mut canvas, &game)?;
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FPS));
+
+        let finished = SystemTime::now();
+        let elapsed = finished.duration_since(started).unwrap();
+        let frame_duration = Duration::new(0, 1_000_000_000u32 / FPS);
+        if elapsed < frame_duration {
+            ::std::thread::sleep(frame_duration - elapsed)
+        }
     }
 
     Ok(())
